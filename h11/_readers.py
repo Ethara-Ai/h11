@@ -41,51 +41,20 @@ obs_fold_re = re.compile(rb"[ \t]+")
 
 
 def _obsolete_line_fold(lines: Iterable[bytes]) -> Iterable[bytes]:
-    it = iter(lines)
-    last: Optional[bytes] = None
-    for line in it:
-        match = obs_fold_re.match(line)
-        if match:
-            if last is None:
-                raise LocalProtocolError("continuation line at start of headers")
-            if not isinstance(last, bytearray):
-                # Cast to a mutable type, avoiding copy on append to ensure O(n) time
-                last = bytearray(last)
-            last += b" "
-            last += line[match.end() :]
-        else:
-            if last is not None:
-                yield last
-            last = line
-    if last is not None:
-        yield last
+    pass
 
 
 def _decode_header_lines(
     lines: Iterable[bytes],
 ) -> Iterable[Tuple[bytes, bytes]]:
-    for line in _obsolete_line_fold(lines):
-        matches = validate(header_field_re, line, "illegal header line: {!r}", line)
-        yield (matches["field_name"], matches["field_value"])
+    pass
 
 
 request_line_re = re.compile(request_line.encode("ascii"))
 
 
 def maybe_read_from_IDLE_client(buf: ReceiveBuffer) -> Optional[Request]:
-    lines = buf.maybe_extract_lines()
-    if lines is None:
-        if buf.is_next_line_obviously_invalid_request_line():
-            raise LocalProtocolError("illegal request line")
-        return None
-    if not lines:
-        raise LocalProtocolError("no request line received")
-    matches = validate(
-        request_line_re, lines[0], "illegal request line: {!r}", lines[0]
-    )
-    return Request(
-        headers=list(_decode_header_lines(lines[1:])), _parsed=True, **matches
-    )
+    pass
 
 
 status_line_re = re.compile(status_line.encode("ascii"))
@@ -94,29 +63,7 @@ status_line_re = re.compile(status_line.encode("ascii"))
 def maybe_read_from_SEND_RESPONSE_server(
     buf: ReceiveBuffer,
 ) -> Union[InformationalResponse, Response, None]:
-    lines = buf.maybe_extract_lines()
-    if lines is None:
-        if buf.is_next_line_obviously_invalid_request_line():
-            raise LocalProtocolError("illegal request line")
-        return None
-    if not lines:
-        raise LocalProtocolError("no response line received")
-    matches = validate(status_line_re, lines[0], "illegal status line: {!r}", lines[0])
-    http_version = (
-        b"1.1" if matches["http_version"] is None else matches["http_version"]
-    )
-    reason = b"" if matches["reason"] is None else matches["reason"]
-    status_code = int(matches["status_code"])
-    class_: Union[Type[InformationalResponse], Type[Response]] = (
-        InformationalResponse if status_code < 200 else Response
-    )
-    return class_(
-        headers=list(_decode_header_lines(lines[1:])),
-        _parsed=True,
-        status_code=status_code,
-        reason=reason,
-        http_version=http_version,
-    )
+    pass
 
 
 class ContentLengthReader:
@@ -222,9 +169,7 @@ class Http10Reader:
 
 
 def expect_nothing(buf: ReceiveBuffer) -> None:
-    if buf:
-        raise LocalProtocolError("Got data when expecting EOF")
-    return None
+    pass
 
 
 ReadersType = Dict[

@@ -212,25 +212,25 @@ class Connection:
         See :ref:`state-machine` for details.
 
         """
-        return dict(self._cstate.states)
+        pass
 
     @property
     def our_state(self) -> Type[Sentinel]:
         """The current state of whichever role we are playing. See
         :ref:`state-machine` for details.
         """
-        return self._cstate.states[self.our_role]
+        pass
 
     @property
     def their_state(self) -> Type[Sentinel]:
         """The current state of whichever role we are NOT playing. See
         :ref:`state-machine` for details.
         """
-        return self._cstate.states[self.their_role]
+        pass
 
     @property
     def they_are_waiting_for_100_continue(self) -> bool:
-        return self.their_role is CLIENT and self.client_is_waiting_for_100_continue
+        pass
 
     def start_next_cycle(self) -> None:
         """Attempt to reset our connection state for a new request/response
@@ -244,13 +244,7 @@ class Connection:
         See :ref:`keepalive-and-pipelining`.
 
         """
-        old_states = dict(self._cstate.states)
-        self._cstate.start_next_cycle()
-        self._request_method = None
-        # self.their_http_version gets left alone, since it presumably lasts
-        # beyond a single request/response cycle
-        assert not self.client_is_waiting_for_100_continue
-        self._respond_to_state_changes(old_states)
+        pass
 
     def _process_error(self, role: Type[Sentinel]) -> None:
         old_states = dict(self._cstate.states)
@@ -359,7 +353,7 @@ class Connection:
 
         See :ref:`switching-protocols` for discussion of why you'd want this.
         """
-        return (bytes(self._receive_buffer), self._receive_buffer_closed)
+        pass
 
     def receive_data(self, data: bytes) -> None:
         """Add data to our internal receive buffer.

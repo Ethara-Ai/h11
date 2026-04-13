@@ -121,7 +121,7 @@ class Headers(Sequence[Tuple[bytes, bytes]]):
         return (name, value)
 
     def raw_items(self) -> List[Tuple[bytes, bytes]]:
-        return [(raw_name, value) for raw_name, _, value in self._full_items]
+        pass
 
 
 HeaderTypes = Union[

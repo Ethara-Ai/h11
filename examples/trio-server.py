@@ -170,31 +170,7 @@ class TrioHTTPWrapper:
         # implementing a client you might prefer to send ConnectionClosed()
         # and let it raise an exception if that violates the protocol.)
         #
-        try:
-            await self.stream.send_eof()
-        except trio.BrokenResourceError:
-            # They're already gone, nothing to do
-            return
-        # Wait and read for a bit to give them a chance to see that we closed
-        # things, but eventually give up and just close the socket.
-        # XX FIXME: possibly we should set SO_LINGER to 0 here, so
-        # that in the case where the client has ignored our shutdown and
-        # declined to initiate the close themselves, we do a violent shutdown
-        # (RST) and avoid the TIME_WAIT?
-        # it looks like nginx never does this for keepalive timeouts, and only
-        # does it for regular timeouts (slow clients I guess?) if explicitly
-        # enabled ("Default: reset_timedout_connection off")
-        with trio.move_on_after(TIMEOUT):
-            try:
-                while True:
-                    # Attempt to read until EOF
-                    got = await self.stream.receive_some(MAX_RECV)
-                    if not got:
-                        break
-            except trio.BrokenResourceError:
-                pass
-            finally:
-                await self.stream.aclose()
+        pass
 
     def basic_headers(self):
         # HTTP requires these headers in all responses (client would do
@@ -240,38 +216,7 @@ class TrioHTTPWrapper:
 # track of how successful we were and raise new errors if things don't work
 # out.
 async def http_serve(stream):
-    wrapper = TrioHTTPWrapper(stream)
-    wrapper.info("Got new connection")
-    while True:
-        assert wrapper.conn.states == {h11.CLIENT: h11.IDLE, h11.SERVER: h11.IDLE}
-
-        try:
-            with trio.fail_after(TIMEOUT):
-                wrapper.info("Server main loop waiting for request")
-                event = await wrapper.next_event()
-                wrapper.info("Server main loop got event:", event)
-                if type(event) is h11.Request:
-                    await send_echo_response(wrapper, event)
-        except Exception as exc:
-            wrapper.info(f"Error during response handler: {exc!r}")
-            await maybe_send_error_response(wrapper, exc)
-
-        if wrapper.conn.our_state is h11.MUST_CLOSE:
-            wrapper.info("connection is not reusable, so shutting down")
-            await wrapper.shutdown_and_clean_up()
-            return
-        else:
-            try:
-                wrapper.info("trying to re-use connection")
-                wrapper.conn.start_next_cycle()
-            except h11.ProtocolError:
-                states = wrapper.conn.states
-                wrapper.info("unexpected state", states, "-- bailing out")
-                await maybe_send_error_response(
-                    wrapper, RuntimeError(f"unexpected state {states}")
-                )
-                await wrapper.shutdown_and_clean_up()
-                return
+    pass
 
 
 ################################################################
@@ -281,73 +226,20 @@ async def http_serve(stream):
 
 # Helper function
 async def send_simple_response(wrapper, status_code, content_type, body):
-    wrapper.info("Sending", status_code, "response with", len(body), "bytes")
-    headers = wrapper.basic_headers()
-    headers.append(("Content-Type", content_type))
-    headers.append(("Content-Length", str(len(body))))
-    res = h11.Response(status_code=status_code, headers=headers)
-    await wrapper.send(res)
-    await wrapper.send(h11.Data(data=body))
-    await wrapper.send(h11.EndOfMessage())
+    pass
 
 
 async def maybe_send_error_response(wrapper, exc):
     # If we can't send an error, oh well, nothing to be done
-    wrapper.info("trying to send error response...")
-    if wrapper.conn.our_state not in {h11.IDLE, h11.SEND_RESPONSE}:
-        wrapper.info("...but I can't, because our state is", wrapper.conn.our_state)
-        return
-    try:
-        if isinstance(exc, h11.RemoteProtocolError):
-            status_code = exc.error_status_hint
-        elif isinstance(exc, trio.TooSlowError):
-            status_code = 408  # Request Timeout
-        else:
-            status_code = 500
-        body = str(exc).encode("utf-8")
-        await send_simple_response(
-            wrapper, status_code, "text/plain; charset=utf-8", body
-        )
-    except Exception as exc:
-        wrapper.info("error while sending error response:", exc)
+    pass
 
 
 async def send_echo_response(wrapper, request):
-    wrapper.info("Preparing echo response")
-    if request.method not in {b"GET", b"POST"}:
-        # Laziness: we should send a proper 405 Method Not Allowed with the
-        # appropriate Accept: header, but we don't.
-        raise RuntimeError("unsupported method")
-    response_json = {
-        "method": request.method.decode("ascii"),
-        "target": request.target.decode("ascii"),
-        "headers": [
-            (name.decode("ascii"), value.decode("ascii"))
-            for (name, value) in request.headers
-        ],
-        "body": "",
-    }
-    while True:
-        event = await wrapper.next_event()
-        if type(event) is h11.EndOfMessage:
-            break
-        assert type(event) is h11.Data
-        response_json["body"] += event.data.decode("ascii")
-    response_body_unicode = json.dumps(
-        response_json, sort_keys=True, indent=4, separators=(",", ": ")
-    )
-    response_body_bytes = response_body_unicode.encode("utf-8")
-    await send_simple_response(
-        wrapper, 200, "application/json; charset=utf-8", response_body_bytes
-    )
+    pass
 
 
 async def serve(port):
-    print(f"listening on http://localhost:{port}")
-    try:
-        await trio.serve_tcp(http_serve, port)
-    except KeyboardInterrupt:
-        print("KeyboardInterrupt - shutting down")
+    pass
 
 
 ################################################################
